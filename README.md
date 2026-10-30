@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Task Manager – Penetration Test Report
 
-## Getting Started
+**Date:** 30 October 2026  
+**Tester:** Harrison Daniel  
+**Application:** Vulnerable Task Manager (Next.js)  
+**Scope:** `http://localhost:3000`  
+**Overall Risk:** High / Critical
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Executive Summary
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application contains multiple high and critical vulnerabilities that allow a low-privileged user to:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- View, edit, and delete other users’ tasks (IDOR)
+- Access administrative endpoints
+- Forge JWT tokens and escalate to admin privileges
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+These issues enable full compromise of user data and privilege escalation.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Findings
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. Insecure Direct Object Reference (IDOR) – Tasks
+**Severity:** High  
+**Endpoint:** `GET/PUT/DELETE /api/tasks/{id}`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Any authenticated user can read, modify, or delete tasks belonging to other users by changing the task ID. No ownership validation is performed.
 
-## Deploy on Vercel
+**Impact:** Unauthorized data access and modification.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Remediation:** Check that `task.ownerId === currentUser.id` before allowing access.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+### 2. Broken Access Control – Admin Endpoint
+**Severity:** High  
+**Endpoint:** `GET /api/admin/users`
+
+Normal users can access the admin users list. No role verification is enforced.
+
+**Impact:** Information disclosure and vertical privilege escalation.
+
+**Remediation:** Restrict the endpoint to users with `role === "admin"`.
+
+---
+
+### 3. Weak JWT Signing Secret
+**Severity:** Critical  
+**Location:** `src/lib/auth.ts`
+
+JWT tokens are signed with the weak secret `"secret"`. This can be easily cracked, allowing attackers to forge tokens with any role (including admin).
+
+**Impact:** Complete authentication bypass and privilege escalation.
+
+**Remediation:**  
+- Use a strong, randomly generated secret  
+- Store it in environment variables  
+- Prefer RS256 where possible  
+- Implement short expiry + token rotation
+
+---
+
+## Summary of Recommendations
+
+1. Replace the weak JWT secret immediately  
+2. Add ownership checks on all task/order endpoints  
+3. Enforce role-based access control on admin routes  
+4. Filter list endpoints so users only see their own data  
+
+---
+
+## Conclusion
+
+The application is vulnerable to critical Broken Access Control and Cryptographic failures. All findings are easily exploitable and should be fixed before any real-world deployment.
+
+**Report by:** Harrison Daniel  
+**Date:** 30 October 2026"# vuln-task-manager" 
