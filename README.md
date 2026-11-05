@@ -61,7 +61,13 @@ JWT tokens are signed with the weak secret `"secret"`. This can be easily cracke
 - Implement short expiry + token rotation
 
 ---
+## Development and Security Testing
 
+I designed and developed this application with intentionally introduced security vulnerabilities to create a practical environment for learning and demonstrating web application penetration testing.
+
+The project allowed me to explore how insecure authentication, missing authorisation checks and weak cryptographic configurations can expose applications to security risks.
+
+I documented the vulnerabilities, assessed their potential impact and proposed appropriate remediation strategies.
 ## Summary of Recommendations
 
 1. Replace the weak JWT secret immediately  
